@@ -1,6 +1,7 @@
-import random
+import random, os
+cmd_folder = os.path.dirname(os.path.abspath(__file__))
 def get_wordlist(type):
-    file = open(type+'.txt', 'r')
+    file = open(os.path.join(cmd_folder, type+'.txt'), 'r')
     list = file.readlines()
     file.close()
     return list
