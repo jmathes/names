@@ -92,7 +92,7 @@ def supported_types():
     return generators.keys() + ['random']
 
 def get(type):
-    if type == ['random']:
+    if type == 'random':
         type = random.choice(generators.keys())
     if type not in generators.keys():
         raise NotImplementedError('Unsupported name type: %s' % type)
