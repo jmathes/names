@@ -1,99 +1,16 @@
 import random
-words = [
-         "noble",
-         "altruistic",
-         "honest",
-         "friend",
-         "loyal",
-         "gentle",
-         "good",
-         "trustworthy",
-         "innocent",
-         "great",
-         "harmless",
-         "carefree",
-         "obedient",
-         "authentic",
-         "reliable",
-         "dependable",
-         "true",
-         "august",
-         "grand",
-         "majestic",
-         "graceful",
-         "sublime",
-         "magnanimous",
-         "ethical",
-         "respectable",
-         "healthy",
-         "beautiful",
-         "desire",
-         "strong",
-         "vindicated",
-         "victor",
-         "virtuous",
-         "generous",
-         "benevolent",
-         "charitable",
-         "helpful",
-         "kind",
-         ]
-male_names = [
-         "james",
-         "john",
-         "robert",
-         "michael",
-         "william",
-         "david",
-         "richard",
-         "charles",
-         "joseph",
-         "thomas",
-         "christopher",
-         "daniel",
-         "paul",
-         "mark",
-         "donald",
-         "george",
-         "kenneth",
-         "steven",
-         "edward",
-         "brian",
-         "ronald",
-         "anthony",
-         "kevin",
-         "jason",
-         "jeff",
-         ]
-female_names = [
-         "mary",
-         "patricia",
-         "linda",
-         "barbara",
-         "elizabeth",
-         "jennifer",
-         "maria",
-         "susan",
-         "margaret",
-         "dorothy",
-         "lisa",
-         "nancy",
-         "karen",
-         "betty",
-         "helen",
-         "sandra",
-         "donna",
-         "carol",
-         "ruth",
-         "sharon",
-         "michelle",
-         "laura",
-         "sarah",
-         "kimberly",
-         "deborah",
-         ]
+def get_wordlist(type):
+    file = open(type+'.txt', 'r')
+    list = file.readlines()
+    file.close()
+    return list
 
-    ###############################################################################
+positive_adjectives = get_wordlist('positive_adjectives')
+male_names = get_wordlist('male_names')
+female_names = get_wordlist('female_names')
+last_names = get_wordlist('last_names')
+
+###############################################################################
 # Markov Name model
 # A random name generator, by Peter Corbett
 # http://www.pick.ucam.org/~ptc24/mchain.html
@@ -120,17 +37,17 @@ class MName:
     """
     A name from a Markov chain
     """
-    def __init__(self, source, chainlen = 2):
+    def __init__(self, source, chainlen = 2, maxlen = 9):
         """
         Building the dictionary
         """
         if chainlen > 10 or chainlen < 1:
-            print "Chain length must be between 1 and 10, inclusive"
-            sys.exit(0)
+            raise ValueError("Chain length must be between 1 and 10, inclusive (you provided %s)", chainlen)
     
         self.mcd = Mdict()
         oldnames = []
         self.chainlen = chainlen
+        self.maxlen = maxlen
     
         for l in source:
             l = l.strip()
@@ -140,29 +57,42 @@ class MName:
                 self.mcd.add_key(s[n:n+chainlen], s[n+chainlen])
             self.mcd.add_key(s[len(l):len(l)+chainlen], "\n")
     
-    def New(self):
+    def New(self, maxlen=None):
         """
         New name from the Markov chain
         """
+        if maxlen is None:
+            maxlen = self.maxlen
         prefix = " " * self.chainlen
         name = ""
         suffix = ""
         while True:
             suffix = self.mcd.get_suffix(prefix)
-            if suffix == "\n" or len(name) > 9:
+            if len(name) > maxlen:
+                break
+            elif suffix == "\n":
                 break
             else:
                 name = name + suffix
                 prefix = prefix[1:] + suffix
         return name.capitalize()  
 
-def get_generator(dictionary):
-    return MName(dictionary)
 
-male_name_generator = get_generator(words + male_names)
-female_name_generator = get_generator(words + female_names)
-def get(male):
-    if male:
-        return male_name_generator.New()
-    return female_name_generator.New()
-    
+generators = {
+              'male': MName(positive_adjectives + male_names),
+              'female': MName(positive_adjectives + female_names),
+              'androgynous': MName(positive_adjectives + male_names + female_names),
+              'asexual': MName(positive_adjectives),
+              'surname': MName(positive_adjectives + last_names),
+              }
+generators['surname'].maxlen = 15
+
+def supported_types():
+    return generators.keys() + ['random']
+
+def get(type):
+    if type == ['random']:
+        type = random.choice(generators.keys())
+    if type not in generators.keys():
+        raise NotImplementedError('Unsupported name type: %s' % type)
+    return generators[type].New()
