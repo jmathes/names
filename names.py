@@ -1,4 +1,4 @@
-import random, os
+import random, os, sys
 cmd_folder = os.path.dirname(os.path.abspath(__file__))
 def get_wordlist(type):
     file = open(os.path.join(cmd_folder, type+'.txt'), 'r')
@@ -7,6 +7,7 @@ def get_wordlist(type):
     return list
 
 positive_adjectives = get_wordlist('positive_adjectives')
+bad_words = get_wordlist('bad_words')
 male_names = get_wordlist('male_names')
 female_names = get_wordlist('female_names')
 last_names = get_wordlist('last_names')
@@ -85,6 +86,11 @@ generators = {
               'androgynous': MName(positive_adjectives + male_names + female_names),
               'asexual': MName(positive_adjectives),
               'surname': MName(positive_adjectives + last_names),
+              'badmale': MName(bad_words + male_names),
+              'badfemale': MName(bad_words + female_names),
+              'badandrogynous': MName(bad_words + male_names + female_names),
+              'badasexual': MName(bad_words),
+              'badsurname': MName(bad_words + last_names),
               }
 generators['surname'].maxlen = 15
 
@@ -97,3 +103,9 @@ def get(type):
     if type not in generators.keys():
         raise NotImplementedError('Unsupported name type: %s' % type)
     return generators[type].New()
+
+
+if __name__ == '__main__':
+    for i in xrange(10):
+        print get(sys.argv[1]), get(sys.argv[2])
+
